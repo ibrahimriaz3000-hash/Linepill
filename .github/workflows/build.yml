@@ -13,44 +13,13 @@ jobs:
 
       - name: Unzip project
         run: |
-          if [ ! -d app ]; then
-            ZIP=$(find . -maxdepth 2 -iname "*.zip" | head -n 1)
-            echo "Found zip: $ZIP"
+          echo "== Repo files =="
+          ls -la
+          if [ ! -f settings.gradle ] || [ ! -d app ]; then
+            ZIP=$(find . -maxdepth 2 -iname "*.zip" -not -path "./.git/*" | head -n 1)
             if [ -z "$ZIP" ]; then
               echo "::error::Repo mein koi zip file nahi hai. Pehle zip upload karein."
-              ls -la
               exit 1
             fi
-            unzip -o "$ZIP"
-          fi
-          ls -la
-          ls -la app
-
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.7'
-
-      - name: Get Xposed API jar
-        run: |
-          mkdir -p app/libs
-          for url in \
-            "https://github.com/rovo89/XposedBridge/releases/download/v82/api-82.jar" \
-            "https://api.xposed.info/de/robv/android/xposed/api/82/api-82.jar" \
-            "https://jitpack.io/com/github/rovo89/XposedBridge/82/XposedBridge-82.jar"
-          do
-            echo "Trying $url"
-            if curl -fsSL "$url" -o app/libs/api-82.jar && unzip -tq app/libs/api-82.jar >/dev/null 2>&1; then
-              echo "Downloaded OK"; break
-            fi
-            rm -f app/libs/api-82.jar
-          done
-          test -s app/libs/api-82.jar || { echo "::error::Could not download Xposed API jar"; exit 1; }
-
-      - name: Point Gradle at the local jar
-        run: |
-          sed -i "s#compileOnly 'de.robv.android.xposed:
+            echo "== Using zip: $ZIP =="
+            unzip -l "$ZIP
