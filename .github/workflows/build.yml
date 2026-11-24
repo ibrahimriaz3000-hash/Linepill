@@ -13,7 +13,16 @@ jobs:
 
       - name: Unzip project
         run: |
-          unzip -o lineblackDynamicPill.zip
+          if [ ! -d app ]; then
+            ZIP=$(find . -maxdepth 2 -iname "*.zip" | head -n 1)
+            echo "Found zip: $ZIP"
+            if [ -z "$ZIP" ]; then
+              echo "::error::Repo mein koi zip file nahi hai. Pehle zip upload karein."
+              ls -la
+              exit 1
+            fi
+            unzip -o "$ZIP"
+          fi
           ls -la
           ls -la app
 
@@ -44,24 +53,4 @@ jobs:
 
       - name: Point Gradle at the local jar
         run: |
-          sed -i "s#compileOnly 'de.robv.android.xposed:api:82'#compileOnly files('libs/api-82.jar')#" app/build.gradle
-          sed -i "/api.xposed.info/d" settings.gradle
-          tail -5 app/build.gradle
-
-      - name: Build debug APK
-        run: gradle assembleDebug --no-daemon --console=plain 2>&1 | tee build.log; exit ${PIPESTATUS[0]}
-
-      - name: Show real error
-        if: failure()
-        run: |
-          {
-            echo '### Build error'
-            echo '```'
-            grep -nE -A8 "What went wrong|error:|Could not|FAILURE" build.log | head -60
-            echo '```'
-          } | tee -a "$GITHUB_STEP_SUMMARY"
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: DynamicPill-apk
-          path: app/build/outputs/apk/debug/*.apk
+          sed -i "s#compileOnly 'de.robv.android.xposed:
